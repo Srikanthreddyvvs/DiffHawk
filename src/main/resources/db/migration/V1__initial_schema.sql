@@ -1,0 +1,57 @@
+CREATE TABLE users(
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+github_user_id  BIGINT UNIQUE NOT NULL,
+username VARCHAR(50) UNIQUE NOT NULL,
+email VARCHAR(100) UNIQUE,
+avatar_url VARCHAR(2048),
+access_token VARCHAR(2048) NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE repositories(
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+user_id BIGINT NOT NULL,
+FOREIGN KEY (user_id) REFERENCES users(id),
+github_repo_id BIGINT UNIQUE NOT NULL,
+owner VARCHAR(100) NOT NULL,
+name VARCHAR(100) NOT NULL,
+UNIQUE KEY uq_owner_name(owner,name),
+webhook_secret VARCHAR(256) UNIQUE NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reviews(
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+repository_id BIGINT NOT NULL,
+FOREIGN KEY (repository_id) REFERENCES repositories(id),
+pr_number BIGINT NOT NULL,
+head_sha VARCHAR(100) NOT NULL,
+UNIQUE KEY uq_repo_prno_sha(repository_id,pr_number,head_sha),
+status ENUM ('PENDING','IN_PROGRESS','COMPLETED','COMMENT_FAILED'),
+overall_score INT,
+total_findings INT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+completed_at TIMESTAMP
+);
+
+CREATE TABLE review_findings(
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+review_id BIGINT NOT NULL,
+FOREIGN KEY (review_id) REFERENCES reviews(id),
+file_path VARCHAR(500) NOT NULL,
+line_number INT,
+severity ENUM ('CRITICAL','HIGH','MEDIUM','LOW','INFO'),
+category ENUM ('BUG','SECURITY','PERFORMANCE','CODE_STYLE','ERROR_HANDLING'),
+message TEXT NOT NULL,
+suggestion TEXT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE outbox_events(
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+event_type VARCHAR(100) NOT NULL,
+payload JSON NOT NULL,
+status ENUM ('PENDING','PUBLISHED','FAILED') DEFAULT 'PENDING',
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+published_at TIMESTAMP
+);
