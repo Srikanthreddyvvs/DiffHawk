@@ -25,7 +25,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http.csrf(csrf-> csrf.disable())
-                .authorizeHttpRequests(req-> req.requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**", "/actuator/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(req-> req.requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**", "/actuator/**","/webhooks/github").permitAll().anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2Login(oauth-> oauth
