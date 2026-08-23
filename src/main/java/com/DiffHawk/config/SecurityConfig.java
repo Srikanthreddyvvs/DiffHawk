@@ -2,6 +2,7 @@ package com.DiffHawk.config;
 
 
 import com.DiffHawk.service.CustomOAuth2UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,9 +26,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         http.csrf(csrf-> csrf.disable())
-                .authorizeHttpRequests(req-> req.requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**", "/actuator/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(req-> req.requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**", "/actuator/**","/webhooks/github").permitAll().anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("Unauthorized");
+                        })
+                )
                 .oauth2Login(oauth-> oauth
                         .userInfoEndpoint(userInfo-> userInfo
                                 .userService(customOAuth2UserService))

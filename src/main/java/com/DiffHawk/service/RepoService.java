@@ -4,6 +4,10 @@ import com.DiffHawk.domain.GithubRepo;
 import com.DiffHawk.domain.User;
 import com.DiffHawk.dto.RepoRequestDto;
 import com.DiffHawk.dto.RepoResponseDto;
+import com.DiffHawk.exception.RepoAlreadyRegisteredException;
+import com.DiffHawk.exception.RepoNotFoundException;
+import com.DiffHawk.exception.UnauthorizedException;
+import com.DiffHawk.exception.UserNotFoundException;
 import com.DiffHawk.repository.RepoRepository;
 import com.DiffHawk.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -32,11 +36,11 @@ public class RepoService {
     public RepoResponseDto registerRepo(RepoRequestDto request, Long userId){
         Optional<GithubRepo> repo = repoRepository.findByOwnerAndName(request.owner(),request.name());
         if(repo.isPresent()){
-            throw new RuntimeException("Repo already registered");
+            throw new RepoAlreadyRegisteredException("Repo already registered");
         }
         Optional<User> user = userRepository.findById(userId);
         if(user.isEmpty()){
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("User not found");
         }
         SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[32];
@@ -65,7 +69,7 @@ public class RepoService {
     public List<RepoResponseDto> getMyRepos(Long userId){
         Optional<User> user = userRepository.findById(userId);
         if(user.isEmpty()){
-            throw new RuntimeException("User not found. Can't able to find the repos");
+            throw new UserNotFoundException("User not found");
         }
         List<GithubRepo> lst = repoRepository.findByUser(user.get());
 
@@ -86,10 +90,10 @@ public class RepoService {
     public void deleteRepo(Long repoId, Long userId){
         Optional<GithubRepo> repo = repoRepository.findById(repoId);
         if(repo.isEmpty()){
-            throw new RuntimeException("Repo not found");
+            throw new RepoNotFoundException("Repo not found");
         }
         if(!repo.get().getUser().getId().equals(userId)){
-            throw new RuntimeException("Unauthorized. this repo does not belong to you");
+            throw new UnauthorizedException("This repo does not belong to you");
         }
         repoRepository.delete(repo.get());
     }
