@@ -25,12 +25,21 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: read:user,user:email
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 jwt:
   secret: ${JWT_SECRET}
   expiry-ms: 86400000
 app:
   webhook-url: http://localhost:8081/webhooks/github
+kafka:
+  bootstrap-servers: localhost:9092
+  topics:
+    pr-review-requested: pr.review.requested
 logging:
   level:
     org.flywaydb: DEBUG
