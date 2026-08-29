@@ -1,0 +1,8 @@
+package com.DiffHawk.repository;
+
+import com.DiffHawk.domain.ReviewFinding;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ReviewFindingRepository extends JpaRepository<ReviewFinding,Long> {
+
+}
