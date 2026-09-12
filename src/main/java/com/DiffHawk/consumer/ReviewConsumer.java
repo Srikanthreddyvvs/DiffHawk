@@ -16,6 +16,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ReviewConsumer {
@@ -49,6 +50,13 @@ public class ReviewConsumer {
             GithubRepo repo = repoRepository.findByOwnerAndName(ownerLogin, name)
                     .orElseThrow(() -> new RepoNotFoundException("Repository not found"));
             String accessToken = repo.getUser().getAccessToken();
+            Optional<Review> existingReview = reviewRepository
+                    .findByRepoAndPrNumberAndHeadSha(repo, prNumber, headSha);
+
+            if (existingReview.isPresent()) {
+                System.out.println("Review already exists for PR #" + prNumber + " skipping.");
+                return;
+            }
             Review review = Review.builder()
                     .repo(repo)
                     .prNumber(prNumber)
@@ -71,12 +79,10 @@ public class ReviewConsumer {
                     files
             );
             AiReviewResponseDto response = aiServiceClient.requestReview(request);
-            System.out.println("AI review response: "+response);
+            System.out.println("AI review response: " + response);
         } catch (Exception e) {
             System.out.println("Failed to process pull request review request");
         }
 
-        String password = "admin123";
-        String query = "SELECT * FROM users WHERE id = '" + userId + "'";
     }
-    }
+}
