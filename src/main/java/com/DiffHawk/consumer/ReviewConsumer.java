@@ -1,9 +1,12 @@
 package com.DiffHawk.consumer;
 
+import com.DiffHawk.client.AiServiceClient;
 import com.DiffHawk.client.GitHubClient;
 import com.DiffHawk.domain.GithubRepo;
 import com.DiffHawk.domain.Review;
 import com.DiffHawk.domain.ReviewStatus;
+import com.DiffHawk.dto.AiReviewRequestDto;
+import com.DiffHawk.dto.AiReviewResponseDto;
 import com.DiffHawk.exception.RepoNotFoundException;
 import com.DiffHawk.repository.RepoRepository;
 import com.DiffHawk.repository.ReviewRepository;
@@ -20,12 +23,14 @@ public class ReviewConsumer {
     private final RepoRepository repoRepository;
     private final ReviewRepository reviewRepository;
     private final GitHubClient gitHubClient;
+    private final AiServiceClient aiServiceClient;
 
-    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient) {
+    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient, AiServiceClient aiServiceClient) {
         this.objectMapper = objectMapper;
         this.repoRepository = repoRepository;
         this.reviewRepository = reviewRepository;
         this.gitHubClient = gitHubClient;
+        this.aiServiceClient = aiServiceClient;
     }
 
     @KafkaListener(topics = "${kafka.topics.pr-review-requested}", groupId = "${spring.kafka.consumer.group-id}")
@@ -58,10 +63,20 @@ public class ReviewConsumer {
                             prNumber,
                             accessToken
                     );
-            System.out.println("Fetched " + files.size() + " files for PR #" + prNumber);
+            AiReviewRequestDto request = new AiReviewRequestDto(
+                    review.getId(),
+                    ownerLogin,
+                    name,
+                    prNumber,
+                    files
+            );
+            AiReviewResponseDto response = aiServiceClient.requestReview(request);
+            System.out.println("AI review response: "+response);
         } catch (Exception e) {
             System.out.println("Failed to process pull request review request");
         }
 
+        String password = "admin123";
+        String query = "SELECT * FROM users WHERE id = '" + userId + "'";
     }
     }
