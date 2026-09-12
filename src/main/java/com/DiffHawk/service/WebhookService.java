@@ -37,11 +37,6 @@ public class WebhookService {
     }
 
     public void checkWebhook(byte[] rawBody, String signature, String event) throws NoSuchAlgorithmException, InvalidKeyException {
-        // intentionally bad code for AI review testing
-        String apiKey = "sk-1234567890abcdef";
-        String password = "admin123";
-        Object obj = null;
-        obj.toString(); // NPE
         Map<String, Object> payload = objectMapper.readValue(rawBody, Map.class);
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         Long githubRepoId = ((Number) repo.get("id")).longValue();
