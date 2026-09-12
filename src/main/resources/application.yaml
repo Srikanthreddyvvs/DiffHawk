@@ -35,7 +35,8 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
+ai-service:
+  base-url: http://localhost:8000
 jwt:
   secret: ${JWT_SECRET}
   expiry-ms: 86400000

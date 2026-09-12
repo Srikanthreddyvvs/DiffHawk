@@ -1,9 +1,12 @@
 package com.DiffHawk.consumer;
 
+import com.DiffHawk.client.AiServiceClient;
 import com.DiffHawk.client.GitHubClient;
 import com.DiffHawk.domain.GithubRepo;
 import com.DiffHawk.domain.Review;
 import com.DiffHawk.domain.ReviewStatus;
+import com.DiffHawk.dto.AiReviewRequestDto;
+import com.DiffHawk.dto.AiReviewResponseDto;
 import com.DiffHawk.exception.RepoNotFoundException;
 import com.DiffHawk.repository.RepoRepository;
 import com.DiffHawk.repository.ReviewRepository;
@@ -13,6 +16,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ReviewConsumer {
@@ -20,12 +24,14 @@ public class ReviewConsumer {
     private final RepoRepository repoRepository;
     private final ReviewRepository reviewRepository;
     private final GitHubClient gitHubClient;
+    private final AiServiceClient aiServiceClient;
 
-    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient) {
+    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient, AiServiceClient aiServiceClient) {
         this.objectMapper = objectMapper;
         this.repoRepository = repoRepository;
         this.reviewRepository = reviewRepository;
         this.gitHubClient = gitHubClient;
+        this.aiServiceClient = aiServiceClient;
     }
 
     @KafkaListener(topics = "${kafka.topics.pr-review-requested}", groupId = "${spring.kafka.consumer.group-id}")
@@ -44,6 +50,13 @@ public class ReviewConsumer {
             GithubRepo repo = repoRepository.findByOwnerAndName(ownerLogin, name)
                     .orElseThrow(() -> new RepoNotFoundException("Repository not found"));
             String accessToken = repo.getUser().getAccessToken();
+            Optional<Review> existingReview = reviewRepository
+                    .findByRepoAndPrNumberAndHeadSha(repo, prNumber, headSha);
+
+            if (existingReview.isPresent()) {
+                System.out.println("Review already exists for PR #" + prNumber + " skipping.");
+                return;
+            }
             Review review = Review.builder()
                     .repo(repo)
                     .prNumber(prNumber)
@@ -58,10 +71,18 @@ public class ReviewConsumer {
                             prNumber,
                             accessToken
                     );
-            System.out.println("Fetched " + files.size() + " files for PR #" + prNumber);
+            AiReviewRequestDto request = new AiReviewRequestDto(
+                    review.getId(),
+                    ownerLogin,
+                    name,
+                    prNumber,
+                    files
+            );
+            AiReviewResponseDto response = aiServiceClient.requestReview(request);
+            System.out.println("AI review response: " + response);
         } catch (Exception e) {
             System.out.println("Failed to process pull request review request");
         }
 
     }
-    }
+}
