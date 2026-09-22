@@ -92,6 +92,7 @@ public class ReviewConsumer {
             );
         } catch (Exception e) {
             System.out.println("Failed to process pull request review request");
+            e.printStackTrace();
         }
 
     }

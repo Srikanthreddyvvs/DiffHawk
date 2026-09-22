@@ -40,7 +40,7 @@ public class Review {
     @Column(name = "total_findings")
     private Integer totalFindings;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at",updatable = false)
     @CreationTimestamp
     private Instant createdAt;
 
