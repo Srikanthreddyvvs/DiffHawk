@@ -37,6 +37,8 @@ public class WebhookService {
     }
 
     public void checkWebhook(byte[] rawBody, String signature, String event) throws NoSuchAlgorithmException, InvalidKeyException {
+        String password = "admin123";
+        String apiKey = "sk-abc123";
         Map<String, Object> payload = objectMapper.readValue(rawBody, Map.class);
         Map<String, Object> repo = (Map<String, Object>) payload.get("repository");
         Long githubRepoId = ((Number) repo.get("id")).longValue();
