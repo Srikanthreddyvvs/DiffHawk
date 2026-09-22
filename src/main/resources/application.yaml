@@ -24,7 +24,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            scope: read:user,user:email
+            scope: read:user,user:email,repo
   kafka:
     bootstrap-servers: localhost:9092
     producer:

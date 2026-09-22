@@ -55,17 +55,21 @@ public class ReviewService {
                         finding.message(),
                         finding.suggestion()
                 );
-
-                gitHubClient.postInlineComment(
-                        owner,
-                        repo,
-                        review.getPrNumber(),
-                        headSha,
-                        finding.file(),
-                        finding.line(),
-                        commentBody,
-                        accessToken
-                );
+                try {
+                    gitHubClient.postInlineComment(
+                            owner,
+                            repo,
+                            review.getPrNumber(),
+                            headSha,
+                            finding.file(),
+                            finding.line(),
+                            commentBody,
+                            accessToken
+                    );
+                } catch (Exception e) {
+                    System.out.println("Skipping inline comment for " + finding.file()
+                            + " line " + finding.line() + ": " + e.getMessage());
+                }
             }
         }
         try {
