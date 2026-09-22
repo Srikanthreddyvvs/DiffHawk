@@ -10,6 +10,7 @@ import com.DiffHawk.dto.AiReviewResponseDto;
 import com.DiffHawk.exception.RepoNotFoundException;
 import com.DiffHawk.repository.RepoRepository;
 import com.DiffHawk.repository.ReviewRepository;
+import com.DiffHawk.service.ReviewService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
@@ -25,13 +26,15 @@ public class ReviewConsumer {
     private final ReviewRepository reviewRepository;
     private final GitHubClient gitHubClient;
     private final AiServiceClient aiServiceClient;
+    private final ReviewService reviewService;
 
-    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient, AiServiceClient aiServiceClient) {
+    public ReviewConsumer(ObjectMapper objectMapper, RepoRepository repoRepository, ReviewRepository reviewRepository, GitHubClient gitHubClient, AiServiceClient aiServiceClient, ReviewService reviewService) {
         this.objectMapper = objectMapper;
         this.repoRepository = repoRepository;
         this.reviewRepository = reviewRepository;
         this.gitHubClient = gitHubClient;
         this.aiServiceClient = aiServiceClient;
+        this.reviewService = reviewService;
     }
 
     @KafkaListener(topics = "${kafka.topics.pr-review-requested}", groupId = "${spring.kafka.consumer.group-id}")
@@ -79,7 +82,14 @@ public class ReviewConsumer {
                     files
             );
             AiReviewResponseDto response = aiServiceClient.requestReview(request);
-            System.out.println("AI review response: " + response);
+            reviewService.processReviewResult(
+                    review,
+                    response,
+                    ownerLogin,
+                    name,
+                    headSha,
+                    accessToken
+            );
         } catch (Exception e) {
             System.out.println("Failed to process pull request review request");
         }
