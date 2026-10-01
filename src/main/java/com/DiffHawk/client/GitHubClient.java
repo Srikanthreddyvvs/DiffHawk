@@ -1,6 +1,8 @@
 package com.DiffHawk.client;
 
+import com.DiffHawk.exception.GitHubApiException;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -21,6 +23,13 @@ public class GitHubClient {
                 .header("Authorization", "Bearer "+accessToken)
                 .header("Accept","application/vnd.github.v3+json")
                 .retrieve()
+                .onStatus(
+                        HttpStatusCode::isError,
+                        response->response.bodyToMono(String.class)
+                                .map(errorBody->new GitHubApiException(
+                                        response.statusCode().value(),errorBody
+                                ))
+                )
                 .bodyToMono(new ParameterizedTypeReference<List<Map<String,Object>>>() {
                 })
                 .block();
@@ -51,6 +60,13 @@ public class GitHubClient {
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
+                .onStatus(
+                        HttpStatusCode::isError,
+                        response->response.bodyToMono(String.class)
+                                .map(errorBody->new GitHubApiException(
+                                        response.statusCode().value(),errorBody
+                                ))
+                )
                 .toBodilessEntity()
                 .block();
     }
@@ -73,6 +89,13 @@ public class GitHubClient {
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
+                .onStatus(
+                        HttpStatusCode::isError,
+                        response->response.bodyToMono(String.class)
+                                .map(errorBody->new GitHubApiException(
+                                        response.statusCode().value(),errorBody
+                                ))
+                )
                 .toBodilessEntity()
                 .block();
     }
